@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -19,33 +18,28 @@ import android.view.SurfaceView;
 
 public class Surface extends SurfaceView implements SurfaceHolder.Callback,Runnable
 {
-    // pozwala kontrolować i monitorować powierzchnię
-    private SurfaceHolder mPojemnik=null;
-    // wątek, który odświeża kanwę
-    private Thread mWatekRysujacy;
-    // flaga logiczna do kontrolowania pracy watku
-    private boolean mWatekPracuje=false;
-    // obiekt do tworzenia sekcji krytycznych
-    private Object mBlokada= new Object();
+    private SurfaceHolder mHolder =null;
+    private Thread mDrawningThread;
+    private boolean mThreadStatus=false;
+    private Object mBlock = new Object();
 
-    private Bitmap mBitmapa;
-    private Canvas mKanwa;
-    private Paint mFarba;
+    private Bitmap mBitmap;
+    private Canvas mCanvas;
+    private Paint mPaint;
     private float x=1500;
     private float y=1500;
-    private int grubosc=20;
+    private int thick =20;
     private boolean reset=false;
 
-    private void PowierzchniaRysunku()
+    private void createSurface()
     {
-        //Log.d("Kanwa", "inicjalizacja");
-        mPojemnik=getHolder();
-        mPojemnik.addCallback(this);
-        mBitmapa= Bitmap.createBitmap(2000, 2000, Bitmap.Config.ARGB_8888);
-        mKanwa= new Canvas(mBitmapa);
-        mKanwa.drawARGB(255, 255, 255, 255);
-        mFarba=new Paint();
-        mFarba.setColor(Color.RED);
+        mHolder =getHolder();
+        mHolder.addCallback(this);
+        mBitmap = Bitmap.createBitmap(2000, 2000, Bitmap.Config.ARGB_8888);
+        mCanvas = new Canvas(mBitmap);
+        mCanvas.drawARGB(255, 255, 255, 255);
+        mPaint =new Paint();
+        mPaint.setColor(Color.RED);
 
         setFocusable(true);
     }
@@ -53,13 +47,13 @@ public class Surface extends SurfaceView implements SurfaceHolder.Callback,Runna
     public Surface(Context context)
     {
         super(context);
-        PowierzchniaRysunku();
+        createSurface();
     }
 
     public Surface(Context context, AttributeSet attrs)
     {
         super(context, attrs);
-        PowierzchniaRysunku();
+        createSurface();
     }
 
 
@@ -69,22 +63,22 @@ public class Surface extends SurfaceView implements SurfaceHolder.Callback,Runna
         if (reset)
         {
             reset = false;
-            mKanwa.drawARGB(255,255,255,255);
+            mCanvas.drawARGB(255,255,255,255);
         }
-        mKanwa.drawCircle(x, y, grubosc, mFarba);
-        canvas.drawBitmap(mBitmapa, 0, 0, null);
+        mCanvas.drawCircle(x, y, thick, mPaint);
+        canvas.drawBitmap(mBitmap, 0, 0, null);
 
     }
 
-    public void wznowRysowanie() {
-        mWatekRysujacy= new Thread(this);
-        mWatekPracuje =true;
-        mWatekRysujacy.start();
+    public void continueDrawing() {
+        mDrawningThread = new Thread(this);
+        mThreadStatus =true;
+        mDrawningThread.start();
     }
 
-    public void pauzujRysowanie()
+    public void pauseDrawning()
     {
-        mWatekPracuje=false;
+        mThreadStatus =false;
     }
 
     @Override
@@ -93,28 +87,28 @@ public class Surface extends SurfaceView implements SurfaceHolder.Callback,Runna
         x=event.getX();
         y=event.getY();
         performClick();
-        Path mSciezka = null;
-        mSciezka = new Path();
-        synchronized (mBlokada)
+        Path mPath = null;
+        mPath = new Path();
+        synchronized (mBlock)
         {
             switch(event.getAction())
             {
                 case MotionEvent.ACTION_DOWN:
                 {
-                    grubosc=20;
-                    mSciezka.moveTo(event.getX(), event.getY());
+                    thick =20;
+                    mPath.moveTo(event.getX(), event.getY());
                     break;
                 }
                 case MotionEvent.ACTION_MOVE:
                 {
-                    grubosc=10;
+                    thick =10;
                     break;
                 }
                 case MotionEvent.ACTION_UP:
                 {
-                    grubosc=20;
-                    mSciezka.lineTo(event.getX(), event.getY());
-                    mKanwa.drawPath(mSciezka, mFarba);
+                    thick =20;
+                    mPath.lineTo(event.getX(), event.getY());
+                    mCanvas.drawPath(mPath, mPaint);
                     break;
                 }
             }
@@ -130,24 +124,24 @@ public class Surface extends SurfaceView implements SurfaceHolder.Callback,Runna
     @Override
     public void run()
     {
-        while(mWatekPracuje)
+        while(mThreadStatus)
         {
-            if(!mPojemnik.getSurface().isValid())
+            if(!mHolder.getSurface().isValid())
                 continue;
-            Canvas kanwa=null;
+            Canvas mCanvas=null;
             try
             {
 
-                kanwa = mPojemnik.lockCanvas();
+                mCanvas = mHolder.lockCanvas();
 
-                synchronized (mPojemnik)
+                synchronized (mHolder)
                 {
                     postInvalidate();
                 }
             }
             finally {
-                if (kanwa != null) {
-                    mPojemnik.unlockCanvasAndPost(kanwa);
+                if (mCanvas != null) {
+                    mHolder.unlockCanvasAndPost(mCanvas);
                 }
             }
         }
@@ -158,7 +152,7 @@ public class Surface extends SurfaceView implements SurfaceHolder.Callback,Runna
     public void surfaceCreated(SurfaceHolder holder)
     {
         setWillNotDraw(false);
-        wznowRysowanie();
+        continueDrawing();
     }
 
     @Override
@@ -170,33 +164,33 @@ public class Surface extends SurfaceView implements SurfaceHolder.Callback,Runna
     @Override
     public void surfaceDestroyed(SurfaceHolder holder)
     {
-        pauzujRysowanie();
+        pauseDrawning();
     }
 
-    public void ustawKolor(String kolor)
+    public void setColor(String color)
     {   x=1500;
         y=1500;
-        mFarba= new Paint();
-        switch (kolor)
+        mPaint = new Paint();
+        switch (color)
         {
             case "Red":
             {
-                mFarba.setColor(Color.RED);
+                mPaint.setColor(Color.RED);
                 break;
             }
             case "Green":
             {
-                mFarba.setColor(Color.GREEN);
+                mPaint.setColor(Color.GREEN);
                 break;
             }
             case "Blue":
             {
-                mFarba.setColor(Color.BLUE);
+                mPaint.setColor(Color.BLUE);
                 break;
             }
             case "Yellow":
             {
-                mFarba.setColor(Color.YELLOW);
+                mPaint.setColor(Color.YELLOW);
                 break;
             }
 

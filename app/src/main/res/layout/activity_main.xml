@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <aztek.paint.Surface
-            android:id="@+id/rysunek"
+            android:id="@+id/drawning"
             android:layout_height="match_parent"
             android:layout_width="match_parent">
 
@@ -33,27 +33,27 @@
             android:background="@color/colorRed"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
-            android:onClick="ustawCzerwony"
+            android:onClick="setRed"
             android:id="@+id/button" />
 
         <Button
             android:background="@color/colorYellow"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
-            android:onClick="ustawZolty"
+            android:onClick="setYellow"
             android:id="@+id/button2" />
 
         <Button
             android:background="@color/colorBlue"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
-            android:onClick="ustawNiebieski"
+            android:onClick="setBlue"
             android:id="@+id/button3" />
 
         <Button
             android:background="@color/colorGreen"
             android:layout_width="60dp"
-            android:onClick="ustawZielony"
+            android:onClick="setGreen"
             android:layout_height="wrap_content"
             android:id="@+id/button4" />
 

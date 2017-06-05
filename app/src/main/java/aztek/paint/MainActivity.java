@@ -14,31 +14,31 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
        super.onPause();
-        Surface surface = (Surface)findViewById(R.id.rysunek);
-        surface.wznowRysowanie();
+        Surface surface = (Surface)findViewById(R.id.drawning);
+        surface.continueDrawing();
     }
 
     public void reset(View v) {
-        Surface surface =(Surface)findViewById(R.id.rysunek);
+        Surface surface =(Surface)findViewById(R.id.drawning);
         surface.reset();
     }
 
-    public void ustawZolty(View v) {
-        Surface surface =(Surface)findViewById(R.id.rysunek);
-        surface.ustawKolor("Yellow");
+    public void setYellow(View v) {
+        Surface surface =(Surface)findViewById(R.id.drawning);
+        surface.setColor("Yellow");
     }
-    public void ustawCzerwony(View v) {
-        Surface surface =(Surface)findViewById(R.id.rysunek);
-        surface.ustawKolor("Red");
-    }
-
-    public void ustawNiebieski(View v) {
-        Surface surface =(Surface)findViewById(R.id.rysunek);
-        surface.ustawKolor("Blue");
+    public void setRed(View v) {
+        Surface surface =(Surface)findViewById(R.id.drawning);
+        surface.setColor("Red");
     }
 
-    public void ustawZielony(View v) {
-        Surface surface =(Surface)findViewById(R.id.rysunek);
-        surface.ustawKolor("Green");
+    public void setBlue(View v) {
+        Surface surface =(Surface)findViewById(R.id.drawning);
+        surface.setColor("Blue");
+    }
+
+    public void setGreen(View v) {
+        Surface surface =(Surface)findViewById(R.id.drawning);
+        surface.setColor("Green");
     }
 }
